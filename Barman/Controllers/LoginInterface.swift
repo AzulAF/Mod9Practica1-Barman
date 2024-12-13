@@ -53,7 +53,7 @@ class LoginInterface: UIViewController, ASAuthorizationControllerPresentationCon
             } else {
                 showAlert(title: "Sin conexión", message: "No tienes acceso a Internet. Algunas funciones pueden no estar disponibles.")
             }
-            //azulazulada8@gmail.com
+            //
         }
         
         // Método reutilizable para mostrar alertas
