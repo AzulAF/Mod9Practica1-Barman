@@ -7,6 +7,10 @@
 
 import UIKit
 
+protocol CustomLoginViewControllerDelegate {
+    func customLoginViewController(_ me: CustomLoginViewController, performLogin: Bool)
+}
+
 class CustomLoginViewController: UIViewController, UITextFieldDelegate {
 
     let label:UILabel = UILabel()
@@ -14,18 +18,9 @@ class CustomLoginViewController: UIViewController, UITextFieldDelegate {
     let passwordField:UITextField = UITextField()
     let loginButton:UIButton = UIButton()
     
-    let actInd = UIActivityIndicatorView(style: .large)
-    // TODO: implementar cuando debe aparecer y desaparecer el activity indicator (3)
-    func showActivityIndicator(){
-        actInd.center = self.view.center
-        actInd.startAnimating()
-        self.view.addSubview(actInd)
-    }
-    
-    func hideActivityIndicator(){
-        actInd.stopAnimating()
-        actInd.removeFromSuperview()
-    }
+    // TODO: implementar cuando debe aparecer y desaparecer el activity indicator (3) v
+    var delegate: CustomLoginViewControllerDelegate?
+    let activityInd = UIActivityIndicatorView(style: .large)
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -43,7 +38,6 @@ class CustomLoginViewController: UIViewController, UITextFieldDelegate {
         accountField.autocorrectionType = .no
         accountField.returnKeyType = .next
         accountField.delegate = self
-        
         passwordField.placeholder = "Contraseña:"
         passwordField.setLeftPaddingPoints(10)
         passwordField.customize(false)
@@ -53,7 +47,10 @@ class CustomLoginViewController: UIViewController, UITextFieldDelegate {
         passwordField.autocorrectionType = .no
         passwordField.returnKeyType = .next
         passwordField.delegate = self
-    
+        
+        activityInd.hidesWhenStopped = true
+        self.view.addSubview(activityInd)
+        
         loginButton.backgroundColor =  Utils.UIColorFromRGB(rgbValue: colorPrimaryDark)
         loginButton.setTitle("Acceder", for: .normal)
         loginButton.layer.cornerRadius = 5
@@ -85,10 +82,11 @@ class CustomLoginViewController: UIViewController, UITextFieldDelegate {
             message = "Por favor ingrese su password"
         }
         if message.isEmpty {
+            activityInd.startAnimating()
             Services().loginService(account, pass) { dict in
                 DispatchQueue.main.async {  // hay que volver al thread principal para hacer cambios en la UI
                     // TODO: agregar un activity indicator, y desactivarlo aqui (3)
-                    self.hideActivityIndicator()
+                    self.activityInd.stopAnimating() //se requiere self??? -> si
                     
                     guard let codigo = dict?["code"] as? Int,
                           let mensaje = dict?["message"] as? String
@@ -98,23 +96,23 @@ class CustomLoginViewController: UIViewController, UITextFieldDelegate {
                     }
                     if codigo == 200 {
                         // TODO: Implementar con UserDefaults la comprobación de sesión iniciada (3)
-                        UserDefaults.standard.set(true, forKey: "isLoggedIn")
-                        UserDefaults.standard.set(account, forKey: "userAccount")
-                        self.performSegue(withIdentifier: "loginOK", sender:nil)
-                    }
-                    else {
+                        let userDefaultsToUse = UserDefaults.standard
+                        userDefaultsToUse.set(true, forKey: "customLogin")
+                        userDefaultsToUse.set(account, forKey: "userAccount")
+                        userDefaultsToUse.synchronize()
+                        //NO HACER SEGUE A LOGINOK FUERA DEL HILO PRINCIPAL
+                        //self.performSegue(withIdentifier: "loginOK", sender:nil)
+                        
+                        //SI NO SE NOTIFICA, AUNQUE EL LOGINOK EXISTA Y HAYA CONEXION NO HACE NADA
+                        self.delegate?.customLoginViewController(self, performLogin: true)
+                    } else {
                         Utils.showMessage(mensaje)
                     }
                 }
             }
-            if parent != nil {
-                //let localParent = parent as! LoginInterface
-                //localParent.customLogin(mail:account, password:pass)
+        }   else {
+                Utils.showMessage(message)
             }
-        }
-        else {
-            Utils.showMessage(message)
-        }
     }
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {

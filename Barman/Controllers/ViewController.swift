@@ -26,44 +26,42 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
 
     @objc func logout () {
         // TODO: confirmar si el usuario realmente quiere cerrar sesión (4)
-        let alertController = UIAlertController(
-            title: "Cerrar Sesión",
-            message: "¿Estas seguro que deseas cerrar sesión?",
-            preferredStyle: .alert
+        let alertToUse = UIAlertController(title: "Cerrar Sesión", message: "Tu sesión se cerrará ¿Estas seguro?", preferredStyle: .alert
         )
-        
-        
+        alertToUse.addAction(UIAlertAction(title: "Cancelar", style: .cancel, handler: nil))
         
         // TODO: si es customLogin, hay que revisar en UserDefaults y eliminar la llave (5)
+        let userDefaultToUse2 = UserDefaults.standard
+        
         let confirmAction = UIAlertAction(title: "Cerrar Sesión", style: .destructive){ _ in
-            if let _ = UserDefaults.standard.object(forKey: "isLoggedIn"){
-                UserDefaults.standard.removeObject(forKey: "isLoggedIn")
-                UserDefaults.standard.removeObject(forKey: "userAccount")
+            if let _ = UserDefaults.standard.object(forKey: "customLogin"){
+                userDefaultToUse2.removeObject(forKey: "customLogin")
+                userDefaultToUse2.removeObject(forKey: "userAccount")
             }
             
             // si esta loggeado con AppleId
             //No se puede realizar por medio del simulador
             
-            //        if let appleUserID = UserDefaults.standard.string(forKey: "appleUserID"){
+            //        if let appleUserID = userDefaulToUse2.string(forKey: "appleUserID"){
             //            let request = ASAuthorizationController(authorizationRequests: [request]])
             //            controller.delegate = self
             //            controller.performRequests()
             //
             //
-            //            UserDefaults.standard.removeObject(forKey: "appleUserID")
+            //            userDefaultToUse2.removeObject(forKey: "appleUserID")
             
             // si esta loggeado con Google
             GIDSignIn.sharedInstance.signOut()
             self.dismiss(animated: true)
         }
         
-        let cancelAction = UIAlertAction(title: "Cancelar", style: .cancel, handler: nil)
-        alertController.addAction(confirmAction)
-        alertController.addAction(cancelAction)
+        
+        alertToUse.addAction(confirmAction)
         
         DispatchQueue.main.async{
-            self.present(alertController, animated: true, completion:nil)
+            self.present(alertToUse, animated: true, completion:nil)
         }
+
     }
     
     @objc func nuevoDrink() {
